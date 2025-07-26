@@ -1,0 +1,103 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Enter Results - {{ test.test_id }} - CLMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-keyboard"></i> Enter Test Results - {{ test.test_id }}</h4>
+            </div>
+            <div class="card-body">
+                <!-- Test Information Summary -->
+                <div class="alert alert-info">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Patient:</strong> {{ test.patient.full_name }}</p>
+                            <p class="mb-1"><strong>Test:</strong> {{ test.test_type.name }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Sample:</strong> {{ test.test_type.sample_type }}</p>
+                            <p class="mb-0"><strong>Reference Range:</strong> {{ test.test_type.reference_range }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.result_value.id_for_label }}" class="form-label">Test Result *</label>
+                        <div class="input-group">
+                            {{ form.result_value }}
+                            <span class="input-group-text">{{ test.test_type.units|default:"" }}</span>
+                        </div>
+                        {% if form.result_value.errors %}
+                            <div class="text-danger small">{{ form.result_value.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">
+                            Normal range: {{ test.test_type.reference_range }}
+                        </small>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.is_abnormal }}
+                            <label class="form-check-label" for="{{ form.is_abnormal.id_for_label }}">
+                                Mark as abnormal result
+                            </label>
+                        </div>
+                        <small class="form-text text-muted">
+                            Check this box if the result is outside the normal reference range
+                        </small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ form.technician_notes.id_for_label }}" class="form-label">Technical Notes</label>
+                        {{ form.technician_notes }}
+                        <small class="form-text text-muted">
+                            Any technical observations, methodology notes, or quality control comments
+                        </small>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'test_detail' test.test_id %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Test
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Save Results
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Reference Information -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5><i class="fas fa-book"></i> Test Reference Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Test Code:</strong> {{ test.test_type.code }}</p>
+                        <p><strong>Category:</strong> {{ test.test_type.category.name }}</p>
+                        <p><strong>Sample Type:</strong> {{ test.test_type.sample_type }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Reference Range:</strong> {{ test.test_type.reference_range }}</p>
+                        <p><strong>Units:</strong> {{ test.test_type.units|default:"N/A" }}</p>
+                        <p><strong>Normal TAT:</strong> {{ test.test_type.normal_turnaround_time }} hours</p>
+                    </div>
+                </div>
+                {% if test.test_type.description %}
+                <hr>
+                <p><strong>Description:</strong></p>
+                <p class="text-muted">{{ test.test_type.description }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

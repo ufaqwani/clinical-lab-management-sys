@@ -1,0 +1,130 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Tests - CLMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-flask"></i> All Tests ({{ stats.total }})</h2>
+    <a href="{% url 'test_order' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Order New Test
+    </a>
+</div>
+
+<!-- Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="text-primary">{{ stats.pending }}</h4>
+                <small class="text-muted">Pending</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="text-warning">{{ stats.processing }}</h4>
+                <small class="text-muted">Processing</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="text-success">{{ stats.completed }}</h4>
+                <small class="text-muted">Completed</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="text-info">{{ stats.total }}</h4>
+                <small class="text-muted">Total</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search Form -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                {{ form.search_query }}
+            </div>
+            <div class="col-md-2">
+                {{ form.status }}
+            </div>
+            <div class="col-md-2">
+                {{ form.priority }}
+            </div>
+            <div class="col-md-2">
+                {{ form.test_type }}
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tests Table -->
+<div class="card">
+    <div class="card-body">
+        {% if tests %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Test ID</th>
+                            <th>Patient</th>
+                            <th>Test Type</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                            <th>Ordered</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for test in tests %}
+                        <tr>
+                            <td><strong>{{ test.test_id }}</strong></td>
+                            <td>{{ test.patient.full_name }}</td>
+                            <td>{{ test.test_type.name }}</td>
+                            <td>
+                                <span class="badge bg-{% if test.status == 'COMPLETED' %}success{% elif test.status == 'PROCESSING' %}warning{% elif test.status == 'ORDERED' %}primary{% else %}secondary{% endif %}">
+                                    {{ test.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{% if test.priority == 'STAT' %}danger{% elif test.priority == 'URGENT' %}warning{% else %}info{% endif %}">
+                                    {{ test.priority }}
+                                </span>
+                            </td>
+                            <td>{{ test.ordered_date|date:"M d, Y H:i" }}</td>
+                            <td>
+                                <a href="{% url 'test_detail' test.test_id %}" class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-flask fa-3x text-muted mb-3"></i>
+                <h4>No tests found</h4>
+                <p class="text-muted">Start by ordering a new test.</p>
+                <a href="{% url 'test_order' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Order New Test
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Delete {{ patient.full_name }} - CLMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4><i class="fas fa-exclamation-triangle"></i> Confirm Patient Deletion</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-warning"></i>
+                    <strong>Warning:</strong> This action will deactivate the patient record. 
+                    The patient will no longer appear in active patient lists, but historical data will be preserved.
+                </div>
+
+                <h5>Patient Details:</h5>
+                <ul class="list-unstyled">
+                    <li><strong>Patient ID:</strong> {{ patient.patient_id }}</li>
+                    <li><strong>Name:</strong> {{ patient.full_name }}</li>
+                    <li><strong>Phone:</strong> {{ patient.phone_number|default:"Not provided" }}</li>
+                    <li><strong>Registered:</strong> {{ patient.created_date|date:"F d, Y" }}</li>
+                </ul>
+
+                <p class="text-muted">
+                    Are you sure you want to deactivate this patient record?
+                </p>
+
+                <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Yes, Deactivate Patient
+                    </button>
+                </form>
+                
+                <a href="{% url 'patient_detail' patient.patient_id %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,173 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Reports - CLMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-file-pdf"></i> Laboratory Reports ({{ stats.total }})</h2>
+    <a href="{% url 'generate_report' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Generate New Report
+    </a>
+</div>
+
+<!-- Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="text-secondary">{{ stats.draft }}</h4>
+                <small class="text-muted">Draft</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="text-info">{{ stats.generated }}</h4>
+                <small class="text-muted">Generated</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="text-success">{{ stats.signed }}</h4>
+                <small class="text-muted">Signed</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="text-primary">{{ stats.total }}</h4>
+                <small class="text-muted">Total</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search Form -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                {{ form.search_query }}
+            </div>
+            <div class="col-md-2">
+                {{ form.status }}
+            </div>
+            <div class="col-md-2">
+                {{ form.date_from }}
+            </div>
+            <div class="col-md-2">
+                {{ form.date_to }}
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Reports Table -->
+<div class="card">
+    <div class="card-body">
+        {% if reports %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Report ID</th>
+                            <th>Patient</th>
+                            <th>Tests</th>
+                            <th>Status</th>
+                            <th>Generated</th>
+                            <th>Signed By</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in reports %}
+                        <tr>
+                            <td><strong>{{ report.report_id }}</strong></td>
+                            <td>{{ report.patient.full_name }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ report.tests.count }} test{{ report.tests.count|pluralize }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{% if report.status == 'SIGNED' %}success{% elif report.status == 'GENERATED' %}info{% elif report.status == 'DRAFT' %}secondary{% else %}warning{% endif %}">
+                                    {{ report.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ report.generated_date|date:"M d, Y H:i" }}</td>
+                            <td>
+                                {% if report.signed_by %}
+                                    {{ report.signed_by.username }}
+                                    <br><small class="text-muted">{{ report.signed_date|date:"M d, Y" }}</small>
+                                {% else %}
+                                    <span class="text-muted">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'report_detail' report.report_id %}" class="btn btn-outline-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if report.report_file %}
+                                        <a href="{% url 'download_report' report.report_id %}" class="btn btn-outline-success">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if reports.has_other_pages %}
+                <nav aria-label="Reports pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if reports.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ reports.previous_page_number }}">Previous</a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in reports.paginator.page_range %}
+                            {% if reports.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% else %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if reports.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ reports.next_page_number }}">Next</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-file-pdf fa-3x text-muted mb-3"></i>
+                <h4>No reports found</h4>
+                <p class="text-muted">Generate your first laboratory report.</p>
+                <a href="{% url 'generate_report' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Generate Report
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

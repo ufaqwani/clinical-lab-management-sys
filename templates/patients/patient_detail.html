@@ -1,0 +1,119 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{{ patient.full_name }} - CLMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-user"></i> {{ patient.full_name }}</h2>
+    <div>
+        <a href="{% url 'patient_update' patient.patient_id %}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Edit Patient
+        </a>
+        <a href="{% url 'patient_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Patient Information -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> Patient Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Patient ID:</strong> {{ patient.patient_id }}</p>
+                        <p><strong>Full Name:</strong> {{ patient.full_name }}</p>
+                        <p><strong>Date of Birth:</strong> {{ patient.date_of_birth|date:"F d, Y" }}</p>
+                        <p><strong>Gender:</strong> {{ patient.get_gender_display }}</p>
+                        <p><strong>Blood Group:</strong> {{ patient.blood_group|default:"Not specified" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Phone:</strong> {{ patient.phone_number|default:"Not provided" }}</p>
+                        <p><strong>Email:</strong> {{ patient.email|default:"Not provided" }}</p>
+                        <p><strong>Insurance:</strong> {{ patient.insurance_number|default:"Not provided" }}</p>
+                        <p><strong>Emergency Contact:</strong> {{ patient.emergency_contact|default:"Not provided" }}</p>
+                        <p><strong>Registered:</strong> {{ patient.created_date|date:"F d, Y" }}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <p><strong>Address:</strong></p>
+                        <p class="text-muted">{{ patient.address }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Tests -->
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-flask"></i> Recent Tests</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_tests %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Test ID</th>
+                                    <th>Test Type</th>
+                                    <th>Status</th>
+                                    <th>Date Ordered</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for test in recent_tests %}
+                                <tr>
+                                    <td>{{ test.test_id }}</td>
+                                    <td>{{ test.test_type.name }}</td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ test.get_status_display }}</span>
+                                    </td>
+                                    <td>{{ test.ordered_date|date:"M d, Y" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No tests ordered yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-tasks"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" disabled>
+                        <i class="fas fa-plus"></i> Order New Test
+                    </button>
+                    <button class="btn btn-info" disabled>
+                        <i class="fas fa-history"></i> View Test History
+                    </button>
+                    <button class="btn btn-success" disabled>
+                        <i class="fas fa-file-pdf"></i> Generate Report
+                    </button>
+                    <a href="{% url 'patient_update' patient.patient_id %}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Edit Patient
+                    </a>
+                </div>
+                <hr>
+                <small class="text-muted">
+                    <i class="fas fa-info-circle"></i> 
+                    Some features will be available in upcoming steps.
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

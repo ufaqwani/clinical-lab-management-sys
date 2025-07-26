@@ -1,0 +1,263 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{{ test.test_id }} - CLMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-flask"></i> Test {{ test.test_id }}</h2>
+    <div>
+        {% if can_enter_results %}
+            <a href="{% url 'test_enter_results' test.test_id %}" class="btn btn-success">
+                <i class="fas fa-keyboard"></i> Enter Results
+            </a>
+        {% endif %}
+        <a href="{% url 'test_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Tests
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Test Information -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> Test Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Test ID:</strong> {{ test.test_id }}</p>
+                        <p><strong>Patient:</strong> 
+                            <a href="{% url 'patient_detail' test.patient.patient_id %}">{{ test.patient.full_name }}</a>
+                        </p>
+                        <p><strong>Test Type:</strong> {{ test.test_type.name }} ({{ test.test_type.code }})</p>
+                        <p><strong>Category:</strong> {{ test.test_type.category.name }}</p>
+                        <p><strong>Sample Type:</strong> {{ test.test_type.sample_type }}</p>
+                        <p><strong>Reference Range:</strong> {{ test.test_type.reference_range }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Priority:</strong> 
+                            <span class="badge bg-{% if test.priority == 'STAT' %}danger{% elif test.priority == 'URGENT' %}warning{% else %}info{% endif %}">
+                                {{ test.priority }}
+                            </span>
+                        </p>
+                        <p><strong>Status:</strong> 
+                            <span class="badge bg-{% if test.status == 'COMPLETED' %}success{% elif test.status == 'PROCESSING' %}warning{% elif test.status == 'ORDERED' %}primary{% else %}secondary{% endif %}">
+                                {{ test.get_status_display }}
+                            </span>
+                        </p>
+                        <p><strong>Ordered By:</strong> {{ test.ordered_by.username }}</p>
+                        <p><strong>Ordered Date:</strong> {{ test.ordered_date|date:"F d, Y H:i" }}</p>
+                        <p><strong>Expected Cost:</strong> ${{ test.test_type.cost }}</p>
+                        <p><strong>Turnaround Time:</strong> {{ test.test_type.normal_turnaround_time }} hours</p>
+                    </div>
+                </div>
+                {% if test.notes %}
+                <hr>
+                <p><strong>Special Instructions:</strong></p>
+                <p class="text-muted">{{ test.notes }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Test Results -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-bar"></i> Test Results</h5>
+            </div>
+            <div class="card-body">
+                {% if test.result %}
+                    <div class="alert alert-{% if test.result.is_abnormal %}warning{% else %}success{% endif %}">
+                        <h5>
+                            <i class="fas fa-{% if test.result.is_abnormal %}exclamation-triangle{% else %}check-circle{% endif %}"></i>
+                            Result: {{ test.result.result_value }} {{ test.test_type.units }}
+                        </h5>
+                        <p class="mb-0"><strong>Reference Range:</strong> {{ test.test_type.reference_range }}</p>
+                        {% if test.result.is_abnormal %}
+                            <p class="mb-0 text-danger"><strong>Status:</strong> Abnormal</p>
+                        {% else %}
+                            <p class="mb-0 text-success"><strong>Status:</strong> Normal</p>
+                        {% endif %}
+                    </div>
+                    
+                    {% if test.result.technician_notes %}
+                    <p><strong>Technical Notes:</strong></p>
+                    <p class="text-muted">{{ test.result.technician_notes }}</p>
+                    {% endif %}
+                    
+                    {% if test.result.reviewed_by %}
+                    <small class="text-muted">
+                        Reviewed by {{ test.result.reviewed_by.username }} on {{ test.result.reviewed_date|date:"F d, Y H:i" }}
+                    </small>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-hourglass-half fa-2x text-muted mb-3"></i>
+                        <h5>Results Pending</h5>
+                        <p class="text-muted">Test results have not been entered yet.</p>
+                        {% if can_enter_results %}
+                            <a href="{% url 'test_enter_results' test.test_id %}" class="btn btn-primary">
+                                <i class="fas fa-keyboard"></i> Enter Results
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Workflow & Actions -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-tasks"></i> Test Workflow</h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <!-- Ordered -->
+                    <div class="timeline-item {% if test.ordered_date %}completed{% endif %}">
+                        <div class="timeline-marker {% if test.ordered_date %}bg-success{% else %}bg-secondary{% endif %}">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6>Test Ordered</h6>
+                            {% if test.ordered_date %}
+                                <small class="text-muted">{{ test.ordered_date|date:"M d, Y H:i" }}</small>
+                                <br><small>by {{ test.ordered_by.username }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Sample Collection -->
+                    <div class="timeline-item {% if test.sample_collected_date %}completed{% endif %}">
+                        <div class="timeline-marker {% if test.sample_collected_date %}bg-success{% elif can_collect %}bg-warning{% else %}bg-secondary{% endif %}">
+                            <i class="fas fa-vial"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6>Sample Collection</h6>
+                            {% if test.sample_collected_date %}
+                                <small class="text-muted">{{ test.sample_collected_date|date:"M d, Y H:i" }}</small>
+                                {% if test.sample_collected_by %}
+                                    <br><small>by {{ test.sample_collected_by.username }}</small>
+                                {% endif %}
+                            {% elif can_collect %}
+                                <form method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" name="collect_sample" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-check"></i> Mark Collected
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Processing -->
+                    <div class="timeline-item {% if test.processed_by %}completed{% endif %}">
+                        <div class="timeline-marker {% if test.processed_by %}bg-success{% elif can_process %}bg-warning{% else %}bg-secondary{% endif %}">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6>Processing</h6>
+                            {% if test.processed_by %}
+                                <small class="text-muted">Started processing</small>
+                                <br><small>by {{ test.processed_by.username }}</small>
+                            {% elif can_process %}
+                                <form method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" name="start_processing" class="btn btn-sm btn-info">
+                                        <i class="fas fa-play"></i> Start Processing
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Results -->
+                    <div class="timeline-item {% if test.result %}completed{% endif %}">
+                        <div class="timeline-marker {% if test.result %}bg-success{% elif can_enter_results %}bg-warning{% else %}bg-secondary{% endif %}">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6>Results Ready</h6>
+                            {% if test.result %}
+                                <small class="text-muted">{{ test.result.created_date|date:"M d, Y H:i" }}</small>
+                            {% elif can_enter_results %}
+                                <a href="{% url 'test_enter_results' test.test_id %}" class="btn btn-sm btn-success">
+                                    <i class="fas fa-keyboard"></i> Enter Results
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-bolt"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'patient_detail' test.patient.patient_id %}" class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-user"></i> View Patient
+                    </a>
+                    {% if test.result %}
+                    <button class="btn btn-outline-success btn-sm" disabled>
+                        <i class="fas fa-file-pdf"></i> Generate Report
+                    </button>
+                    {% endif %}
+                    <a href="{% url 'test_order' %}?patient_id={{ test.patient.patient_id }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-plus"></i> Order Another Test
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 20px;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 20px;
+}
+
+.timeline-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 30px;
+    height: calc(100% - 10px);
+    width: 2px;
+    background-color: #dee2e6;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -15px;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+}
+
+.timeline-content {
+    margin-left: 25px;
+}
+
+.timeline-item.completed .timeline-content h6 {
+    color: #198754;
+}
+</style>
+{% endblock %}
