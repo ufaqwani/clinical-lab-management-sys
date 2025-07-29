@@ -12,7 +12,87 @@
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
-                    {{ form.as_p }}
+
+                    <div class="mb-3">
+                        <label for="{{ form.category.id_for_label }}">Category</label>
+                        {{ form.category }}
+                        {% if form.category.errors %}
+                            <div class="text-danger small">{{ form.category.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.name.id_for_label }}">Name</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="text-danger small">{{ form.name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.code.id_for_label }}">Code</label>
+                        {{ form.code }}
+                        {% if form.code.errors %}
+                            <div class="text-danger small">{{ form.code.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}">Description</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="text-danger small">{{ form.description.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.sample_type.id_for_label }}">Sample Type</label>
+                        {{ form.sample_type }}
+                        {% if form.sample_type.errors %}
+                            <div class="text-danger small">{{ form.sample_type.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.reference_range.id_for_label }}">Reference Range</label>
+                        {{ form.reference_range }}
+                        {% if form.reference_range.errors %}
+                            <div class="text-danger small">{{ form.reference_range.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.units.id_for_label }}">Units</label>
+                        {{ form.units }}
+                        {% if form.units.errors %}
+                            <div class="text-danger small">{{ form.units.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.normal_turnaround_time.id_for_label }}">Turnaround Time (Hours)</label>
+                        {{ form.normal_turnaround_time }}
+                        {% if form.normal_turnaround_time.errors %}
+                            <div class="text-danger small">{{ form.normal_turnaround_time.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.cost.id_for_label }}">Cost</label>
+                        {{ form.cost }}
+                        {% if form.cost.errors %}
+                            <div class="text-danger small">{{ form.cost.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        {{ form.is_active }}
+                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
+                        {% if form.is_active.errors %}
+                            <div class="text-danger small">{{ form.is_active.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
                     <div class="d-flex justify-content-between mt-3">
                         <a href="{% url 'test_order' %}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left"></i> Back

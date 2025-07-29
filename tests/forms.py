@@ -99,7 +99,7 @@ class SampleCollectionForm(forms.Form):
 class TestTypeForm(forms.ModelForm):
     class Meta:
         model = TestType
-        fields = ['name', 'code', 'category', 'sample_type', 'cost', 'is_active']
+        fields = ['name', 'code', 'category', 'sample_type', 'cost', 'is_active', 'normal_turnaround_time']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'code': forms.TextInput(attrs={'class': 'form-control'}),
