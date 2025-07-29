@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Test, TestResult, TestType
+from .models import Test, TestResult, TestType, TestCategory
 from patients.models import Patient
 import uuid
 
@@ -109,3 +109,9 @@ class TestTypeForm(forms.ModelForm):
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
+# enable labs to add test categories
+
+class TestCategoryForm(forms.ModelForm):
+    class Meta:
+        model = TestCategory
+        fields = ['name', 'code', 'description']

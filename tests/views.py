@@ -7,9 +7,9 @@ from django.utils import timezone
 from django.http import JsonResponse
 
 from .models import Test, TestResult, TestType, TestCategory
-from .forms import TestOrderForm, TestResultForm, TestSearchForm, TestTypeForm
+from .forms import TestOrderForm, TestResultForm, TestSearchForm, TestTypeForm, TestCategoryForm
 from patients.models import Patient
-from accounts.models import LabMembership
+from accounts.models import LabMembership, Lab
 
 
 def test_list(request):
@@ -63,6 +63,13 @@ def test_list(request):
 @login_required
 def test_order(request):
     """Order a new test"""
+    lab_membership = request.user.lab_memberships.filter(is_active=True).first()
+    if not lab_membership:
+        messages.error(request, "You must be associated with a lab to order tests.")
+        return redirect('home')
+    
+    lab = lab_membership.lab
+
     if request.method == 'POST':
         form = TestOrderForm(request.POST, user=request.user)
         if form.is_valid():
@@ -71,8 +78,7 @@ def test_order(request):
             return redirect('test_detail', test_id=test.test_id)
     else:
         form = TestOrderForm(user=request.user)
-        
-        # Pre-select patient if provided in URL
+
         patient_id = request.GET.get('patient_id')
         if patient_id:
             try:
@@ -80,11 +86,12 @@ def test_order(request):
                 form.fields['patient'].initial = patient
             except Patient.DoesNotExist:
                 pass
-    
+
     return render(request, 'tests/test_order.html', {
         'form': form,
-        'test_categories': TestCategory.objects.prefetch_related('testtype_set').all()
+        'test_categories': TestCategory.objects.filter(lab=lab).prefetch_related('testtype_set')
     })
+
 
 def test_detail(request, test_id):
     """View test details and manage test workflow"""
@@ -207,3 +214,26 @@ def create_test_type(request):
     return render(request, 'tests/create_test_type.html', {'form': form})
 
 
+# enable test category for labs
+
+@login_required
+def create_test_category(request):
+    lab_membership = request.user.lab_memberships.filter(is_active=True).first()
+    lab = lab_membership.lab if lab_membership else None
+
+    if lab is None:
+        messages.error(request, "You must be associated with a lab to create categories.")
+        return redirect('home')
+
+    if request.method == 'POST':
+        form = TestCategoryForm(request.POST)
+        if form.is_valid():
+            category = form.save(commit=False)
+            category.lab = lab
+            category.save()
+            messages.success(request, "Test category created successfully.")
+            return redirect('test_order')
+    else:
+        form = TestCategoryForm()
+
+    return render(request, 'tests/create_test_category.html', {'form': form})

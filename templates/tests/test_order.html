@@ -37,11 +37,14 @@
                             <div class="text-danger small">{{ form.test_type.errors.0 }}</div>
                         {% endif %}
                         {% if user.is_authenticated %}
-                        <div class="mt-2">
-                            <a href="{% url 'create_test_type' %}" class="btn btn-sm btn-outline-primary">
-                                ➕ New Test Type
-                            </a>
-                        </div>
+                            <div class="mb-3 text-end d-flex justify-content-end gap-2">
+                                <a href="{% url 'create_test_category' %}" class="btn btn-sm btn-outline-secondary">
+                                    ➕ New Test Category
+                                </a>
+                                <a href="{% url 'create_test_type' %}" class="btn btn-sm btn-outline-primary">
+                                    ➕ New Test Type
+                                </a>
+                            </div>
                         {% endif %}
                     </div>
 
