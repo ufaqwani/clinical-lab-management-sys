@@ -5,9 +5,12 @@ from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.http import JsonResponse
+
 from .models import Test, TestResult, TestType, TestCategory
-from .forms import TestOrderForm, TestResultForm, TestSearchForm
+from .forms import TestOrderForm, TestResultForm, TestSearchForm, TestTypeForm
 from patients.models import Patient
+from accounts.models import LabMembership
+
 
 def test_list(request):
     """List all tests with search and filtering"""
@@ -178,3 +181,29 @@ def dashboard(request):
         'metrics': metrics
     }
     return render(request, 'tests/dashboard.html', context)
+
+
+# enable test type for labs
+
+@login_required
+def create_test_type(request):
+    """Allow lab users to create new test types within their lab"""
+    lab_membership = request.user.lab_memberships.filter(is_active=True).first()
+    if not lab_membership:
+        messages.error(request, "You must be associated with an active lab to add test types.")
+        return redirect('test_order')
+
+    if request.method == 'POST':
+        form = TestTypeForm(request.POST)
+        if form.is_valid():
+            test_type = form.save(commit=False)
+            test_type.lab = lab_membership.lab
+            test_type.save()
+            messages.success(request, f"Test Type '{test_type.name}' created successfully.")
+            return redirect('test_order')
+    else:
+        form = TestTypeForm()
+
+    return render(request, 'tests/create_test_type.html', {'form': form})
+
+

@@ -12,17 +12,18 @@ from .pdf_generator import LabReportGenerator
 from tests.models import Test
 from patients.models import Patient
 
+
 def report_list(request):
     """List all reports with search and filtering"""
     form = ReportSearchForm(request.GET)
     reports = Report.objects.select_related('patient', 'generated_by', 'signed_by').all()
-    
+
     if form.is_valid():
         search_query = form.cleaned_data.get('search_query')
         status = form.cleaned_data.get('status')
         date_from = form.cleaned_data.get('date_from')
         date_to = form.cleaned_data.get('date_to')
-        
+
         if search_query:
             reports = reports.filter(
                 Q(report_id__icontains=search_query) |
@@ -30,29 +31,24 @@ def report_list(request):
                 Q(patient__last_name__icontains=search_query) |
                 Q(patient__patient_id__icontains=search_query)
             )
-        
         if status:
             reports = reports.filter(status=status)
-            
         if date_from:
             reports = reports.filter(generated_date__date__gte=date_from)
-            
         if date_to:
             reports = reports.filter(generated_date__date__lte=date_to)
-    
-    # Pagination
+
     paginator = Paginator(reports, 15)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
-    # Summary stats
+
     stats = {
         'total': reports.count(),
         'draft': reports.filter(status='DRAFT').count(),
         'generated': reports.filter(status='GENERATED').count(),
         'signed': reports.filter(status='SIGNED').count(),
     }
-    
+
     context = {
         'reports': page_obj,
         'form': form,
@@ -60,48 +56,41 @@ def report_list(request):
     }
     return render(request, 'reports/report_list.html', context)
 
+
 @login_required
 def generate_report(request):
     """Generate a new report"""
     if request.method == 'POST':
         form = ReportGenerationForm(request.POST)
         if form.is_valid():
-            # Create report instance
             report = Report.objects.create(
                 patient=form.cleaned_data['patient'],
                 template=form.cleaned_data['template'],
                 report_format=form.cleaned_data['report_format'],
                 generated_by=request.user,
-                notes=form.cleaned_data.get('notes', '')
+                notes=form.cleaned_data.get('notes', ''),
+                lab=form.cleaned_data['patient'].lab
             )
-            
-            # Add selected tests
             tests = form.cleaned_data['tests']
             report.tests.set(tests)
-            
-            # Generate PDF if requested
+
             if form.cleaned_data['report_format'] == 'PDF':
                 try:
                     pdf_generator = LabReportGenerator(report)
                     pdf_content = pdf_generator.generate_pdf()
-                    
-                    # Save PDF file
                     filename = f"report_{report.report_id}.pdf"
                     report.report_file.save(
                         filename,
                         ContentFile(pdf_content),
                         save=True
                     )
-                    
                     report.status = 'GENERATED'
                     report.save()
-                    
                     messages.success(request, f'Report {report.report_id} generated successfully!')
                     return redirect('report_detail', report_id=report.report_id)
-                    
                 except Exception as e:
                     messages.error(request, f'Error generating PDF: {str(e)}')
-                    report.delete()  # Clean up failed report
+                    report.delete()
             else:
                 report.status = 'GENERATED'
                 report.save()
@@ -109,11 +98,9 @@ def generate_report(request):
                 return redirect('report_detail', report_id=report.report_id)
     else:
         form = ReportGenerationForm()
-        
-        # Pre-populate if test_id or patient_id provided
         test_id = request.GET.get('test_id')
         patient_id = request.GET.get('patient_id')
-        
+
         if test_id:
             try:
                 test = Test.objects.get(test_id=test_id)
@@ -127,18 +114,21 @@ def generate_report(request):
                 form.fields['patient'].initial = patient
             except Patient.DoesNotExist:
                 pass
-    
+
+        form.fields['template'].initial = ReportTemplate.objects.filter(is_default=True).first()
+
+    available_templates = ReportTemplate.objects.filter(is_default=True)
     context = {
         'form': form,
-        'available_templates': ReportTemplate.objects.filter(is_default=True)
+        'available_templates': available_templates
     }
     return render(request, 'reports/generate_report.html', context)
+
 
 def report_detail(request, report_id):
     """View report details"""
     report = get_object_or_404(Report, report_id=report_id)
-    
-    # Handle report signing
+
     if request.method == 'POST' and 'sign_report' in request.POST:
         if request.user.is_authenticated:
             report.signed_by = request.user
@@ -147,7 +137,7 @@ def report_detail(request, report_id):
             report.save()
             messages.success(request, 'Report signed successfully!')
             return redirect('report_detail', report_id=report.report_id)
-    
+
     context = {
         'report': report,
         'tests': report.tests.all(),
@@ -155,33 +145,32 @@ def report_detail(request, report_id):
     }
     return render(request, 'reports/report_detail.html', context)
 
+
 def download_report(request, report_id):
     """Download report PDF"""
     report = get_object_or_404(Report, report_id=report_id)
-    
+
+    if not report.report_file and report.report_format == 'PDF':
+        try:
+            pdf_generator = LabReportGenerator(report)
+            pdf_content = pdf_generator.generate_pdf()
+            filename = f"report_{report.report_id}.pdf"
+            report.report_file.save(
+                filename,
+                ContentFile(pdf_content),
+                save=True
+            )
+        except Exception as e:
+            messages.error(request, f'Error generating PDF: {str(e)}')
+            return redirect('report_detail', report_id=report_id)
+
     if not report.report_file:
-        # Generate PDF on demand if not exists
-        if report.report_format == 'PDF':
-            try:
-                pdf_generator = LabReportGenerator(report)
-                pdf_content = pdf_generator.generate_pdf()
-                
-                filename = f"report_{report.report_id}.pdf"
-                report.report_file.save(
-                    filename,
-                    ContentFile(pdf_content),
-                    save=True
-                )
-            except Exception as e:
-                messages.error(request, f'Error generating PDF: {str(e)}')
-                return redirect('report_detail', report_id=report_id)
-        else:
-            raise Http404("Report file not found")
-    
-    # Serve the file
+        raise Http404("Report file not found")
+
     response = HttpResponse(report.report_file.read(), content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="report_{report.report_id}.pdf"'
     return response
+
 
 @login_required
 def batch_generate_reports(request):
@@ -189,56 +178,53 @@ def batch_generate_reports(request):
     if request.method == 'POST':
         test_ids = request.POST.getlist('test_ids')
         template_id = request.POST.get('template_id')
-        
+
         if not test_ids or not template_id:
             messages.error(request, 'Please select tests and a template.')
             return redirect('test_list')
-        
+
         try:
             template = ReportTemplate.objects.get(id=template_id)
             reports_created = []
-            
+
             for test_id in test_ids:
                 test = Test.objects.get(test_id=test_id)
-                
-                # Check if report already exists for this test
+
                 existing_report = Report.objects.filter(
                     patient=test.patient,
                     tests=test
                 ).first()
-                
+
                 if existing_report:
-                    continue  # Skip if report already exists
-                
-                # Create new report
+                    continue
+
                 report = Report.objects.create(
                     patient=test.patient,
                     template=template,
                     generated_by=request.user
                 )
                 report.tests.add(test)
-                
-                # Generate PDF
+
                 pdf_generator = LabReportGenerator(report)
                 pdf_content = pdf_generator.generate_pdf()
-                
+
                 filename = f"report_{report.report_id}.pdf"
                 report.report_file.save(
                     filename,
                     ContentFile(pdf_content),
                     save=True
                 )
-                
+
                 report.status = 'GENERATED'
                 report.save()
                 reports_created.append(report.report_id)
-            
+
             if reports_created:
                 messages.success(request, f'Successfully generated {len(reports_created)} reports: {", ".join(reports_created)}')
             else:
                 messages.info(request, 'No new reports were generated. Reports may already exist for selected tests.')
-                
+
         except Exception as e:
             messages.error(request, f'Error in batch generation: {str(e)}')
-    
+
     return redirect('test_list')

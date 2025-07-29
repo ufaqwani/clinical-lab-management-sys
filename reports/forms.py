@@ -3,6 +3,7 @@ from .models import Report, ReportTemplate
 from tests.models import Test
 from patients.models import Patient
 
+
 class ReportGenerationForm(forms.Form):
     patient = forms.ModelChoiceField(
         queryset=Patient.objects.filter(is_active=True),
@@ -19,7 +20,6 @@ class ReportGenerationForm(forms.Form):
     template = forms.ModelChoiceField(
         queryset=ReportTemplate.objects.all(),
         widget=forms.Select(attrs={'class': 'form-control'}),
-        initial=lambda: ReportTemplate.objects.filter(is_default=True).first()
     )
     
     report_format = forms.ChoiceField(
@@ -35,10 +35,17 @@ class ReportGenerationForm(forms.Form):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Only show completed tests with results
+        
+        # Show only completed tests with results
         self.fields['tests'].queryset = Test.objects.filter(
             status='COMPLETED'
         ).select_related('patient', 'test_type')
+        
+        # Set default template if available
+        default_template = ReportTemplate.objects.filter(is_default=True).first()
+        if default_template:
+            self.fields['template'].initial = default_template
+
 
 class ReportSearchForm(forms.Form):
     search_query = forms.CharField(

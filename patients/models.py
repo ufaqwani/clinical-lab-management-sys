@@ -5,7 +5,7 @@ from accounts.models import Lab
 class Patient(models.Model):
     GENDER_CHOICES = [('M', 'Male'), ('F', 'Female'), ('O', 'Other')]
 
-    lab = models.ForeignKey(Lab, on_delete=models.CASCADE, related_name='patients', db_index=True)
+    lab = models.ForeignKey(Lab, on_delete=models.CASCADE, related_name='patients', db_index=True, null=True, blank=True)
 
     # Keep as PK to avoid SQLite FK mismatch
     patient_id = models.CharField(max_length=20, primary_key=True)

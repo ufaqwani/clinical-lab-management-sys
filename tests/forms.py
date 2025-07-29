@@ -27,6 +27,15 @@ class TestOrderForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+        if self.user:
+            # Get user's active lab (assuming user.lab_memberships exists)
+            lab_membership = self.user.lab_memberships.filter(is_active=True).first()
+            if lab_membership:
+                self.fields['test_type'].queryset = TestType.objects.filter(
+                    lab=lab_membership.lab, is_active=True
+                )
+            else:
+                self.fields['test_type'].queryset = TestType.objects.none()
 
     def save(self, commit=True):
         test = super().save(commit=False)
@@ -84,3 +93,19 @@ class SampleCollectionForm(forms.Form):
         required=False,
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Collection notes...'})
     )
+
+
+# enable labs to add tests
+class TestTypeForm(forms.ModelForm):
+    class Meta:
+        model = TestType
+        fields = ['name', 'code', 'category', 'sample_type', 'cost', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'code': forms.TextInput(attrs={'class': 'form-control'}),
+            'category': forms.Select(attrs={'class': 'form-control'}),
+            'sample_type': forms.TextInput(attrs={'class': 'form-control'}),
+            'cost': forms.NumberInput(attrs={'class': 'form-control'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+

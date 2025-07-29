@@ -10,7 +10,7 @@ def lab_upload_path(instance, filename):
     return f"labs/{lab_id}/reports/{filename}"
 
 class ReportTemplate(models.Model):
-    lab = models.ForeignKey(Lab, on_delete=models.CASCADE, related_name='report_templates', db_index=True)
+    lab = models.ForeignKey(Lab, on_delete=models.CASCADE, related_name='report_templates', db_index=True, null=True, blank=True)
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     template_type = models.CharField(max_length=50, default='standard')
@@ -31,7 +31,7 @@ class Report(models.Model):
     FORMAT_CHOICES = [('PDF', 'PDF'), ('HTML', 'HTML')]
     STATUS_CHOICES = [('DRAFT', 'Draft'), ('GENERATED', 'Generated'), ('SIGNED', 'Signed'), ('DELIVERED', 'Delivered')]
 
-    lab = models.ForeignKey(Lab, on_delete=models.CASCADE, related_name='reports', db_index=True)
+    lab = models.ForeignKey(Lab, on_delete=models.CASCADE, related_name='reports', db_index=True, null=True, blank=True)
 
     report_id = models.CharField(max_length=20, unique=True, primary_key=True)
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
@@ -46,10 +46,10 @@ class Report(models.Model):
     signed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='signed_reports')
     signed_date = models.DateTimeField(null=True, blank=True)
 
-    report_file = models.FileField(upload_to=lab_upload_path, null=True, blank=True)
+    notes = models.TextField(blank=True, null=True)
+    report_file = models.FileField(upload_to='reports/', blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='DRAFT')
 
-    notes = models.TextField(blank=True)
     is_confidential = models.BooleanField(default=True)
 
     class Meta:
@@ -82,7 +82,7 @@ class ReportSection(models.Model):
         ('FOOTER', 'Footer'),
     ]
 
-    lab = models.ForeignKey(Lab, on_delete=models.CASCADE, related_name='report_sections', db_index=True)
+    lab = models.ForeignKey(Lab, on_delete=models.CASCADE, related_name='report_sections', db_index=True, null=True, blank=True)
     template = models.ForeignKey(ReportTemplate, on_delete=models.CASCADE, related_name='sections')
     section_type = models.CharField(max_length=20, choices=SECTION_TYPES)
     title = models.CharField(max_length=100)

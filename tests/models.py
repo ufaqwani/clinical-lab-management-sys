@@ -4,7 +4,7 @@ from accounts.models import Lab
 from patients.models import Patient
 
 class TestCategory(models.Model):
-    lab = models.ForeignKey(Lab, on_delete=models.CASCADE, related_name='test_categories', db_index=True)
+    lab = models.ForeignKey(Lab, on_delete=models.CASCADE, related_name='test_categories', db_index=True, null=True, blank=True)
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     code = models.CharField(max_length=10)
@@ -21,7 +21,7 @@ class TestCategory(models.Model):
         return self.name
 
 class TestType(models.Model):
-    lab = models.ForeignKey(Lab, on_delete=models.CASCADE, related_name='test_types', db_index=True)
+    lab = models.ForeignKey(Lab, on_delete=models.CASCADE, related_name='test_types', db_index=True, null=True, blank=True)
     category = models.ForeignKey(TestCategory, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     code = models.CharField(max_length=20)
@@ -55,7 +55,7 @@ class Test(models.Model):
     ]
     PRIORITY_CHOICES = [('ROUTINE', 'Routine'), ('URGENT', 'Urgent'), ('STAT', 'STAT')]
 
-    lab = models.ForeignKey(Lab, on_delete=models.CASCADE, related_name='tests', db_index=True)
+    lab = models.ForeignKey(Lab, on_delete=models.CASCADE, related_name='tests', db_index=True, null=True, blank=True)
 
     test_id = models.CharField(max_length=20, unique=True, primary_key=True)
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
@@ -88,7 +88,7 @@ class Test(models.Model):
             raise ValidationError("Test.lab must match TestType.lab")
 
 class TestResult(models.Model):
-    lab = models.ForeignKey(Lab, on_delete=models.CASCADE, related_name='test_results', db_index=True)
+    lab = models.ForeignKey(Lab, on_delete=models.CASCADE, related_name='test_results', db_index=True, null=True, blank=True)
     test = models.OneToOneField(Test, on_delete=models.CASCADE, related_name='result')
     result_value = models.CharField(max_length=500)
     is_abnormal = models.BooleanField(default=False)
