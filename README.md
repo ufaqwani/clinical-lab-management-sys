@@ -1,4 +1,8 @@
 # Django Project
+## Clinical Lab Management System
+
+![Uploading Screenshot from 2025-09-04 16-54-01.png…]()
+
 
 ## Overview
 This is a Django-based web application that includes functionality related to accounts, patients, reports, and more. The project uses SQLite as its default database with a backup file included. It is designed for easy setup, testing, and development.
