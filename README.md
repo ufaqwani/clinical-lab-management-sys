@@ -1,7 +1,8 @@
 # Django Project
 ## Clinical Lab Management System
 
-![Uploading Screenshot from 2025-09-04 16-54-01.png…]()
+<img width="1920" height="1080" alt="Screenshot from 2025-09-04 16-54-01" src="https://github.com/user-attachments/assets/a0488b12-fb3f-4b43-b4c0-b20265bf2058" />
+
 
 
 ## Overview
