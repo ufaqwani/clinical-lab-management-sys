@@ -100,7 +100,12 @@ Contributions and improvements are welcome! Feel free to fork the repository and
 
 ## License
 
-[Add your license information here]
+MIT
+
+## Screenshots
+
+<img width="1920" height="1080" alt="Screenshot from 2025-09-04 16-54-26" src="https://github.com/user-attachments/assets/c4d78376-2d87-4838-930a-095283131876" />
+
 
 ---
 
